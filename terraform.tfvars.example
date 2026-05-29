@@ -1,0 +1,28 @@
+aws_region = "eu-west-2"
+aws_profile = "terraform"
+name       = "private-eks"
+vpc_cidr   = "10.0.0.0/16"
+
+public_subnet_cidrs   = ["10.0.0.0/20", "10.0.16.0/20"]
+firewall_subnet_cidrs = ["10.0.64.0/28", "10.0.64.16/28"]
+private_subnet_cidrs  = ["10.0.128.0/20", "10.0.144.0/20"]
+
+cluster_name    = "private-eks"
+cluster_version = "1.35"
+
+primary_node_group_instance_types = ["m6i.large"]
+primary_node_group_min_size       = 1
+primary_node_group_desired_size   = 1
+primary_node_group_max_size       = 4
+
+ml_node_group_instance_types = ["g5.xlarge"]
+ml_node_group_ami_type       = "AL2023_x86_64_NVIDIA"
+ml_node_group_min_size       = 0
+ml_node_group_desired_size   = 0
+ml_node_group_max_size       = 2
+
+tags = {
+  Project     = "private-eks"
+  Environment = "dev"
+  ManagedBy   = "terraform"
+}
