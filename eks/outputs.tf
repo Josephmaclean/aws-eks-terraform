@@ -43,3 +43,8 @@ output "karpenter_interruption_queue_name" {
   description = "SQS queue name for Karpenter interruption handling."
   value       = aws_sqs_queue.karpenter_interruption.name
 }
+
+output "aws_load_balancer_controller_role_arn" {
+  description = "IAM role ARN used by AWS Load Balancer Controller."
+  value       = aws_iam_role.load_balancer_controller.arn
+}

@@ -13,6 +13,7 @@ Terraform for a private EKS environment on AWS. This first step creates the base
 - Kubernetes subnet tags for future EKS load balancers
 - Private EKS cluster with managed node groups for primary and ML workloads
 - Karpenter AWS-side IAM, interruption queue, and example NodePool manifests
+- AWS Load Balancer Controller IAM and bastion Helm bootstrap
 - Private SSM bastion/admin host with kubectl and helm
 - Argo CD bootstrap from the bastion through SSM
 
@@ -30,10 +31,15 @@ Copy `terraform.tfvars.example` to `terraform.tfvars` if you want to override th
 
 ```text
 .
-├── main.tf                  # Root orchestration
-├── variables.tf             # Root inputs
-├── outputs.tf               # Root outputs
-├── eks/                     # EKS cluster, node groups, Karpenter IAM, Karpenter manifests
+├── global_variables.tf      # Shared provider/name/tag inputs
+├── vpc.tf                   # VPC module wiring
+├── vpc_variables.tf         # VPC inputs
+├── vpc_outputs.tf           # VPC outputs, including the grouped "vpc" object
+├── eks.tf                   # EKS, bastion, and optional Argo CD module wiring
+├── eks_bootstrap.tf         # Bastion-driven EKS bootstrap for Karpenter and Argo CD
+├── eks_variables.tf         # EKS, Karpenter, bastion, and Argo CD inputs
+├── eks_outputs.tf           # EKS outputs, including the grouped "eks" object
+├── eks/                     # EKS cluster, node groups, Karpenter, and AWS LBC IAM/manifests
 ├── bastion/                 # Private SSM bastion with kubectl and helm
 ├── argocd/                  # Optional Argo CD Helm bootstrap
 └── modules/
@@ -47,6 +53,15 @@ Copy `terraform.tfvars.example` to `terraform.tfvars` if you want to override th
         ├── locals.tf
         └── outputs.tf
 ```
+
+## Consuming Outputs
+
+Downstream Terraform stacks can consume the grouped root outputs from remote state:
+
+- `vpc`: VPC ID, CIDR, subnet IDs, NAT gateway ID, and Network Firewall ARN.
+- `eks`: cluster endpoint/name, cluster security group, node group ARNs, Karpenter IAM/queue values, AWS Load Balancer Controller role ARN, bastion access commands, and Argo CD bootstrap metadata.
+
+The older individual outputs, such as `vpc_id`, `private_subnet_ids`, `eks_cluster_name`, and `karpenter_node_role_name`, are still kept for compatibility.
 
 ## Routing Shape
 

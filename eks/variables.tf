@@ -92,3 +92,13 @@ variable "karpenter_interruption_queue_retention" {
   description = "Karpenter interruption queue message retention in seconds."
   type        = number
 }
+
+variable "aws_load_balancer_controller_namespace" {
+  description = "Kubernetes namespace where AWS Load Balancer Controller will run."
+  type        = string
+}
+
+variable "aws_load_balancer_controller_service_account_name" {
+  description = "AWS Load Balancer Controller service account name."
+  type        = string
+}

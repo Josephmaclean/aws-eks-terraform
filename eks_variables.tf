@@ -1,61 +1,3 @@
-variable "aws_region" {
-  description = "AWS region to deploy the VPC into."
-  type        = string
-  default     = "eu-west-2"
-}
-
-variable "aws_profile" {
-  description = "AWS shared config profile used by the provider."
-  type        = string
-  default     = "terraform"
-}
-
-variable "name" {
-  description = "Name prefix used for all infrastructure resources."
-  type        = string
-  default     = "private-eks"
-}
-
-variable "vpc_cidr" {
-  description = "CIDR block for the VPC."
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
-variable "availability_zones" {
-  description = "Availability zones to use. Leave empty to use the first two available AZs in the selected region."
-  type        = list(string)
-  default     = []
-}
-
-variable "public_subnet_cidrs" {
-  description = "CIDR blocks for public subnets. Must match the number of selected availability zones."
-  type        = list(string)
-  default     = ["10.0.0.0/20", "10.0.16.0/20"]
-}
-
-variable "firewall_subnet_cidrs" {
-  description = "CIDR blocks for AWS Network Firewall endpoint subnets. Must match the number of selected availability zones."
-  type        = list(string)
-  default     = ["10.0.64.0/28", "10.0.64.16/28"]
-}
-
-variable "private_subnet_cidrs" {
-  description = "CIDR blocks for private subnets. Must match the number of selected availability zones."
-  type        = list(string)
-  default     = ["10.0.128.0/20", "10.0.144.0/20"]
-}
-
-variable "tags" {
-  description = "Default tags applied to all supported AWS resources."
-  type        = map(string)
-  default = {
-    Project     = "private-eks"
-    Environment = "dev"
-    ManagedBy   = "terraform"
-  }
-}
-
 variable "cluster_name" {
   description = "Name of the EKS cluster."
   type        = string
@@ -158,6 +100,48 @@ variable "karpenter_interruption_queue_retention" {
   default     = 300
 }
 
+variable "enable_bastion_karpenter_bootstrap" {
+  description = "Whether to install Karpenter and apply default Karpenter NodePools from the bastion bootstrap."
+  type        = bool
+  default     = true
+}
+
+variable "karpenter_chart_version" {
+  description = "Karpenter Helm chart version."
+  type        = string
+  default     = "1.12.0"
+}
+
+variable "enable_default_karpenter_nodepools" {
+  description = "Whether to apply default primary and ML Karpenter NodePools."
+  type        = bool
+  default     = true
+}
+
+variable "enable_bastion_aws_load_balancer_controller_bootstrap" {
+  description = "Whether to install AWS Load Balancer Controller from the bastion bootstrap."
+  type        = bool
+  default     = true
+}
+
+variable "aws_load_balancer_controller_chart_version" {
+  description = "AWS Load Balancer Controller Helm chart version."
+  type        = string
+  default     = "1.14.0"
+}
+
+variable "aws_load_balancer_controller_namespace" {
+  description = "Kubernetes namespace where AWS Load Balancer Controller will run."
+  type        = string
+  default     = "kube-system"
+}
+
+variable "aws_load_balancer_controller_service_account_name" {
+  description = "AWS Load Balancer Controller service account name."
+  type        = string
+  default     = "aws-load-balancer-controller"
+}
+
 variable "enable_argocd" {
   description = "Whether to install Argo CD with the local Terraform Helm provider. Keep false when using the bastion bootstrap path."
   type        = bool
@@ -249,7 +233,7 @@ variable "argocd_repo_password_key" {
 }
 
 variable "argocd_repo_secret_arn" {
-  description = "Optional Secrets Manager secret ARN for least-privilege IAM. Use * when argocd_repo_secret_id is a name or partial ARN."
+  description = "Fallback Secrets Manager secret ARN for bastion IAM when Argo CD bootstrap is disabled. Bootstrap mode resolves the ARN from argocd_repo_secret_id."
   type        = string
   default     = "*"
 }

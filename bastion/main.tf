@@ -28,6 +28,10 @@ resource "aws_instance" "this" {
     volume_type = "gp3"
   }
 
+  lifecycle {
+    ignore_changes = [ami]
+  }
+
   tags = {
     Name = "${var.name}-bastion"
   }

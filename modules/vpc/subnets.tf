@@ -6,10 +6,12 @@ resource "aws_subnet" "public" {
   availability_zone       = each.key
   map_public_ip_on_launch = true
 
-  tags = {
+  tags = merge({
     Name                     = each.value.name
     "kubernetes.io/role/elb" = "1"
-  }
+    }, var.karpenter_discovery != "" ? {
+    "kubernetes.io/cluster/${var.karpenter_discovery}" = "shared"
+  } : {})
 }
 
 resource "aws_subnet" "firewall" {
@@ -35,6 +37,7 @@ resource "aws_subnet" "private" {
     Name                              = each.value.name
     "kubernetes.io/role/internal-elb" = "1"
     }, var.karpenter_discovery != "" ? {
-    "karpenter.sh/discovery" = var.karpenter_discovery
+    "karpenter.sh/discovery"                           = var.karpenter_discovery
+    "kubernetes.io/cluster/${var.karpenter_discovery}" = "shared"
   } : {})
 }

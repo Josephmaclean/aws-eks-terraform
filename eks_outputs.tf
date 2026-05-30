@@ -1,36 +1,28 @@
-output "vpc_id" {
-  description = "ID of the VPC."
-  value       = module.vpc.vpc_id
-}
-
-output "vpc_cidr" {
-  description = "CIDR block of the VPC."
-  value       = module.vpc.vpc_cidr
-}
-
-output "public_subnet_ids" {
-  description = "IDs of the public subnets."
-  value       = module.vpc.public_subnet_ids
-}
-
-output "firewall_subnet_ids" {
-  description = "IDs of the AWS Network Firewall endpoint subnets."
-  value       = module.vpc.firewall_subnet_ids
-}
-
-output "private_subnet_ids" {
-  description = "IDs of the private subnets."
-  value       = module.vpc.private_subnet_ids
-}
-
-output "nat_gateway_id" {
-  description = "ID of the NAT gateway used for private subnet egress."
-  value       = module.vpc.nat_gateway_id
-}
-
-output "network_firewall_arn" {
-  description = "ARN of the AWS Network Firewall."
-  value       = module.vpc.network_firewall_arn
+output "eks" {
+  description = "EKS, bastion, Argo CD, and Karpenter outputs for downstream consumers."
+  value = {
+    cluster_name                          = module.eks.cluster_name
+    cluster_endpoint                      = module.eks.cluster_endpoint
+    cluster_security_group_id             = module.eks.cluster_security_group_id
+    kubectl_update_kubeconfig_command     = "aws eks update-kubeconfig --region ${var.aws_region} --profile ${var.aws_profile} --name ${module.eks.cluster_name}"
+    kubectl_test_command                  = "kubectl get nodes"
+    primary_node_group_arn                = module.eks.primary_node_group_arn
+    ml_node_group_arn                     = module.eks.ml_node_group_arn
+    karpenter_controller_role_arn         = module.eks.karpenter_controller_role_arn
+    karpenter_node_role_name              = module.eks.karpenter_node_role_name
+    karpenter_interruption_queue_name     = module.eks.karpenter_interruption_queue_name
+    aws_load_balancer_controller_role_arn = module.eks.aws_load_balancer_controller_role_arn
+    bastion_instance_id                   = var.enable_bastion ? module.bastion[0].instance_id : null
+    bastion_role_arn                      = var.enable_bastion ? module.bastion[0].role_arn : null
+    bastion_security_group_id             = var.enable_bastion ? module.bastion[0].security_group_id : null
+    bastion_ssm_start_session_command     = var.enable_bastion ? "aws ssm start-session --region ${var.aws_region} --profile ${var.aws_profile} --target ${module.bastion[0].instance_id}" : null
+    bastion_kubeconfig_command            = var.enable_bastion ? "aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}" : null
+    argocd_namespace                      = var.enable_argocd ? module.argocd[0].namespace : null
+    argocd_release_name                   = var.enable_argocd ? module.argocd[0].release_name : null
+    bastion_bootstrap_association_id      = local.enable_bastion_bootstrap ? aws_ssm_association.argocd_bootstrap[0].association_id : null
+    argocd_bootstrap_association_id       = var.enable_bastion && var.enable_bastion_argocd_bootstrap ? aws_ssm_association.argocd_bootstrap[0].association_id : null
+    argocd_root_app_name                  = var.argocd_root_app_name
+  }
 }
 
 output "eks_cluster_name" {
@@ -114,6 +106,11 @@ output "karpenter_interruption_queue_name" {
   value       = module.eks.karpenter_interruption_queue_name
 }
 
+output "aws_load_balancer_controller_role_arn" {
+  description = "IAM role ARN used by AWS Load Balancer Controller."
+  value       = module.eks.aws_load_balancer_controller_role_arn
+}
+
 output "argocd_namespace" {
   description = "Namespace where Argo CD is installed."
   value       = var.enable_argocd ? module.argocd[0].namespace : null
@@ -127,6 +124,11 @@ output "argocd_release_name" {
 output "argocd_bastion_bootstrap_association_id" {
   description = "SSM association ID for the bastion-based Argo CD bootstrap."
   value       = var.enable_bastion && var.enable_bastion_argocd_bootstrap ? aws_ssm_association.argocd_bootstrap[0].association_id : null
+}
+
+output "bastion_bootstrap_association_id" {
+  description = "SSM association ID for the bastion-based EKS add-on bootstrap."
+  value       = local.enable_bastion_bootstrap ? aws_ssm_association.argocd_bootstrap[0].association_id : null
 }
 
 output "argocd_root_app_name" {

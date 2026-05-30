@@ -35,6 +35,15 @@ kubectl_version                 = "v1.35.0"
 enable_bastion_argocd_bootstrap = true
 argocd_bootstrap_revision       = "1"
 
+enable_bastion_karpenter_bootstrap = true
+karpenter_chart_version            = "1.12.0"
+enable_default_karpenter_nodepools = true
+
+enable_bastion_aws_load_balancer_controller_bootstrap = true
+aws_load_balancer_controller_chart_version            = "1.14.0"
+aws_load_balancer_controller_namespace                = "kube-system"
+aws_load_balancer_controller_service_account_name     = "aws-load-balancer-controller"
+
 # Optional: when set, the bastion bootstrap reads repo credentials from this
 # Secrets Manager secret and creates the Argo CD root Application.
 # Secret JSON example:

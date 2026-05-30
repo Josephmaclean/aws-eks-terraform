@@ -102,6 +102,7 @@ data "aws_iam_policy_document" "karpenter_controller" {
       "ec2:DescribeInstanceTypeOfferings",
       "ec2:DescribeInstanceTypes",
       "ec2:DescribeInstances",
+      "ec2:DescribeInstanceStatus",
       "ec2:DescribeLaunchTemplates",
       "ec2:DescribeSecurityGroups",
       "ec2:DescribeSpotPriceHistory",
@@ -114,7 +115,10 @@ data "aws_iam_policy_document" "karpenter_controller" {
   statement {
     sid = "AllowPricingReadActions"
 
-    actions = ["pricing:GetProducts"]
+    actions = [
+      "pricing:GetProducts",
+      "ssm:GetParameter",
+    ]
 
     resources = ["*"]
   }
@@ -134,6 +138,7 @@ data "aws_iam_policy_document" "karpenter_controller" {
       "iam:CreateInstanceProfile",
       "iam:DeleteInstanceProfile",
       "iam:GetInstanceProfile",
+      "iam:ListInstanceProfiles",
       "iam:RemoveRoleFromInstanceProfile",
       "iam:TagInstanceProfile",
     ]
