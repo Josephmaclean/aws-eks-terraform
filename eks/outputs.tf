@@ -14,6 +14,11 @@ output "cluster_certificate_authority_data" {
   sensitive   = true
 }
 
+output "cluster_security_group_id" {
+  description = "Security group ID attached to the EKS control plane."
+  value       = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+}
+
 output "primary_node_group_arn" {
   description = "ARN of the primary EKS managed node group."
   value       = aws_eks_node_group.primary.arn

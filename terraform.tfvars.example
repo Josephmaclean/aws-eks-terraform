@@ -10,6 +10,10 @@ private_subnet_cidrs  = ["10.0.128.0/20", "10.0.144.0/20"]
 cluster_name    = "private-eks"
 cluster_version = "1.35"
 
+cluster_endpoint_public_access       = false
+cluster_endpoint_private_access      = true
+cluster_endpoint_public_access_cidrs = []
+
 primary_node_group_instance_types = ["m6i.large"]
 primary_node_group_min_size       = 1
 primary_node_group_desired_size   = 1
@@ -20,6 +24,35 @@ ml_node_group_ami_type       = "AL2023_x86_64_NVIDIA"
 ml_node_group_min_size       = 0
 ml_node_group_desired_size   = 0
 ml_node_group_max_size       = 2
+
+enable_argocd        = false
+argocd_namespace     = "argocd"
+argocd_chart_version = "9.5.17"
+
+enable_bastion                  = true
+bastion_instance_type           = "t3.micro"
+kubectl_version                 = "v1.35.0"
+enable_bastion_argocd_bootstrap = true
+argocd_bootstrap_revision       = "1"
+
+# Optional: when set, the bastion bootstrap reads repo credentials from this
+# Secrets Manager secret and creates the Argo CD root Application.
+# Secret JSON example:
+# {
+#   "repo_url": "https://github.com/example/platform-gitops.git",
+#   "github_username": "x-access-token",
+#   "github_token": "ghp_..."
+# }
+argocd_repo_secret_id           = ""
+argocd_repo_secret_arn          = "*"
+argocd_repo_url                 = ""
+argocd_repo_url_key             = "repo_url"
+argocd_repo_username_key        = "github_username"
+argocd_repo_password_key        = "github_token"
+argocd_root_app_name            = "root"
+argocd_root_app_path            = "."
+argocd_root_app_manifest_path   = "root-app.yaml"
+argocd_root_app_target_revision = "HEAD"
 
 tags = {
   Project     = "private-eks"

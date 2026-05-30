@@ -69,7 +69,7 @@ variable "cluster_version" {
 }
 
 variable "cluster_endpoint_public_access" {
-  description = "Whether the EKS API endpoint is reachable from the public internet."
+  description = "Whether the EKS API endpoint is reachable from outside the VPC."
   type        = bool
   default     = false
 }
@@ -156,4 +156,130 @@ variable "karpenter_interruption_queue_retention" {
   description = "Karpenter interruption queue message retention in seconds."
   type        = number
   default     = 300
+}
+
+variable "enable_argocd" {
+  description = "Whether to install Argo CD with the local Terraform Helm provider. Keep false when using the bastion bootstrap path."
+  type        = bool
+  default     = false
+}
+
+variable "argocd_namespace" {
+  description = "Namespace where Argo CD will be installed."
+  type        = string
+  default     = "argocd"
+}
+
+variable "argocd_chart_version" {
+  description = "Argo CD Helm chart version."
+  type        = string
+  default     = "9.5.17"
+}
+
+variable "argocd_server_service_type" {
+  description = "Kubernetes Service type for argocd-server."
+  type        = string
+  default     = "ClusterIP"
+}
+
+variable "argocd_values" {
+  description = "Additional values merged into the Argo CD Helm chart."
+  type        = any
+  default     = {}
+}
+
+variable "enable_bastion" {
+  description = "Whether to create a private SSM bastion/admin host with kubectl and helm."
+  type        = bool
+  default     = true
+}
+
+variable "bastion_instance_type" {
+  description = "Instance type for the private SSM bastion/admin host."
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "kubectl_version" {
+  description = "kubectl version installed on the bastion host."
+  type        = string
+  default     = "v1.35.0"
+}
+
+variable "enable_bastion_argocd_bootstrap" {
+  description = "Whether to install Argo CD from the bastion host using SSM after the EKS cluster is ready."
+  type        = bool
+  default     = true
+}
+
+variable "argocd_bootstrap_revision" {
+  description = "Bump this value to force the SSM Argo CD bootstrap association to rerun."
+  type        = string
+  default     = "1"
+}
+
+variable "argocd_repo_secret_id" {
+  description = "AWS Secrets Manager secret ID or ARN containing Argo CD Git repository credentials as JSON. Defaults to <name>/github/repo when empty."
+  type        = string
+  default     = ""
+}
+
+variable "argocd_repo_url" {
+  description = "Git repository URL for the Argo CD root Application. If empty, the bootstrap reads argocd_repo_url_key from the Secrets Manager secret."
+  type        = string
+  default     = ""
+}
+
+variable "argocd_repo_url_key" {
+  description = "JSON key in argocd_repo_secret_id that contains the Git repository URL."
+  type        = string
+  default     = "repo_url"
+}
+
+variable "argocd_repo_username_key" {
+  description = "JSON key in argocd_repo_secret_id that contains the Git username."
+  type        = string
+  default     = "github_username"
+}
+
+variable "argocd_repo_password_key" {
+  description = "JSON key in argocd_repo_secret_id that contains the Git token or password."
+  type        = string
+  default     = "github_token"
+}
+
+variable "argocd_repo_secret_arn" {
+  description = "Optional Secrets Manager secret ARN for least-privilege IAM. Use * when argocd_repo_secret_id is a name or partial ARN."
+  type        = string
+  default     = "*"
+}
+
+variable "argocd_root_app_name" {
+  description = "Name of the Argo CD root Application."
+  type        = string
+  default     = "root"
+}
+
+variable "argocd_root_app_path" {
+  description = "Path inside the Git repository used by the Argo CD root Application when generating an Application manifest."
+  type        = string
+  default     = "."
+}
+
+variable "argocd_root_app_manifest_path" {
+  description = "Path to the root Application manifest inside the Git repository. When set, bootstrap applies this manifest instead of generating one."
+  type        = string
+  default     = "root-app.yaml"
+}
+
+variable "argocd_root_app_target_revision" {
+  description = "Git target revision used by the Argo CD root Application."
+  type        = string
+  default     = "HEAD"
+}
+
+variable "argocd_root_app_destination_namespace" {
+  description = "Destination namespace used by the Argo CD root Application."
+  type        = string
+  default     = "argocd"
 }

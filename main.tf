@@ -33,3 +33,31 @@ module "eks" {
   karpenter_service_account_name         = var.karpenter_service_account_name
   karpenter_interruption_queue_retention = var.karpenter_interruption_queue_retention
 }
+
+module "bastion" {
+  count  = var.enable_bastion ? 1 : 0
+  source = "./bastion"
+
+  name            = var.name
+  vpc_id          = module.vpc.vpc_id
+  subnet_id       = module.vpc.private_subnet_ids[0]
+  instance_type   = var.bastion_instance_type
+  kubectl_version = var.kubectl_version
+  cluster_name    = module.eks.cluster_name
+  aws_region      = var.aws_region
+  secret_arns     = [var.argocd_repo_secret_arn != "*" ? var.argocd_repo_secret_arn : data.aws_secretsmanager_secret.argocd_repo[0].arn]
+
+  depends_on = [module.eks]
+}
+
+module "argocd" {
+  count  = var.enable_argocd ? 1 : 0
+  source = "./argocd"
+
+  namespace           = var.argocd_namespace
+  chart_version       = var.argocd_chart_version
+  server_service_type = var.argocd_server_service_type
+  values              = var.argocd_values
+
+  depends_on = [module.eks]
+}

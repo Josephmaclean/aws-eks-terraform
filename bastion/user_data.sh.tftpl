@@ -1,0 +1,33 @@
+#!/bin/bash
+set -euo pipefail
+
+dnf update -y
+dnf install -y unzip tar gzip jq git
+
+curl -fsSL "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl
+chmod +x /usr/local/bin/kubectl
+
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get-helm-3
+chmod +x /tmp/get-helm-3
+/tmp/get-helm-3
+
+cat >/usr/local/bin/configure-kubectl <<'SCRIPT'
+#!/bin/bash
+set -euo pipefail
+aws eks update-kubeconfig --region ${aws_region} --name ${cluster_name}
+kubectl get nodes
+SCRIPT
+chmod +x /usr/local/bin/configure-kubectl
+
+cat >/usr/local/bin/install-argocd <<'SCRIPT'
+#!/bin/bash
+set -euo pipefail
+export KUBECONFIG="$HOME/.kube/config"
+mkdir -p "$HOME/.kube"
+aws eks update-kubeconfig --region ${aws_region} --name ${cluster_name}
+helm repo add argo https://argoproj.github.io/argo-helm || true
+helm repo update argo
+helm upgrade --install argocd argo/argo-cd --namespace argocd --create-namespace --wait --timeout 10m
+kubectl -n argocd get pods
+SCRIPT
+chmod +x /usr/local/bin/install-argocd
