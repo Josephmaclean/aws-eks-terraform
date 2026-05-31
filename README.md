@@ -14,8 +14,9 @@ Terraform for a private EKS environment on AWS. This first step creates the base
 - Private EKS cluster with managed node groups for primary and ML workloads
 - Karpenter AWS-side IAM, interruption queue, and example NodePool manifests
 - AWS Load Balancer Controller IAM and bastion Helm bootstrap
+- Terraform-managed SSM bootstrap for Karpenter, AWS Load Balancer Controller, Argo CD, and the Argo CD root Application
 - Private SSM bastion/admin host with kubectl and helm
-- Argo CD bootstrap from the bastion through SSM
+- Terraform destroy-time cleanup for Kubernetes-created AWS dependencies
 
 ## Usage
 
@@ -26,6 +27,26 @@ terraform apply
 ```
 
 Copy `terraform.tfvars.example` to `terraform.tfvars` if you want to override the defaults.
+
+By default Terraform uses the private bastion to install Karpenter, AWS Load
+Balancer Controller, Argo CD, and the Argo CD root `Application` through SSM.
+This keeps Terraform usable from a local machine even when the EKS API endpoint
+is private-only. The root application is read from the configured Git repository
+URL and credentials stored in Secrets Manager.
+
+## Destroy
+
+Use Terraform for teardown:
+
+```sh
+terraform apply -destroy
+```
+
+During destroy, Terraform first runs a local AWS CLI cleanup for
+Kubernetes-created AWS dependencies. It waits for or removes load balancers,
+terminates any remaining Karpenter-created instances, waits for ELB network
+interfaces to clear, and removes leftover `k8s-*` security groups before
+Terraform deletes the EKS cluster and VPC.
 
 ## Layout
 

@@ -22,6 +22,8 @@ module "eks" {
   karpenter_interruption_queue_retention            = var.karpenter_interruption_queue_retention
   aws_load_balancer_controller_namespace            = var.aws_load_balancer_controller_namespace
   aws_load_balancer_controller_service_account_name = var.aws_load_balancer_controller_service_account_name
+
+  depends_on = [terraform_data.vpc_final_destroy_cleanup]
 }
 
 module "bastion" {

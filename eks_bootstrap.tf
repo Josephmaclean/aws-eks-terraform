@@ -239,6 +239,7 @@ resource "aws_ssm_document" "argocd_bootstrap" {
             "      GIT_ASKPASS=/tmp/argocd-git-askpass GIT_USERNAME=\"$REPO_USERNAME\" GIT_PASSWORD=\"$REPO_PASSWORD\" git clone --depth 1 --branch ${var.argocd_root_app_target_revision} \"$REPO_URL\" /tmp/argocd-root-repo",
             "    fi",
             "    kubectl apply -f /tmp/argocd-root-repo/${var.argocd_root_app_manifest_path}",
+            "    for app in $(kubectl -n ${var.argocd_namespace} get applications.argoproj.io -o name); do kubectl -n ${var.argocd_namespace} patch \"$app\" --type merge -p '{\"metadata\":{\"finalizers\":[\"resources-finalizer.argocd.argoproj.io\"]}}' || true; done",
             "  else",
             "  cat <<EOF | kubectl apply -f -",
             "apiVersion: argoproj.io/v1alpha1",
@@ -262,6 +263,7 @@ resource "aws_ssm_document" "argocd_bootstrap" {
             "    syncOptions:",
             "      - CreateNamespace=true",
             "EOF",
+            "  kubectl -n ${var.argocd_namespace} patch application ${var.argocd_root_app_name} --type merge -p '{\"metadata\":{\"finalizers\":[\"resources-finalizer.argocd.argoproj.io\"]}}' || true",
             "  fi",
             "fi",
             "fi",
@@ -293,4 +295,104 @@ resource "aws_ssm_association" "argocd_bootstrap" {
     aws_security_group_rule.bastion_to_eks_api,
     module.eks,
   ]
+}
+
+resource "terraform_data" "cluster_destroy_cleanup" {
+  count = local.enable_bastion_bootstrap ? 1 : 0
+
+  input = {
+    aws_region   = var.aws_region
+    aws_profile  = var.aws_profile
+    cluster_name = module.eks.cluster_name
+    vpc_id       = module.vpc.vpc_id
+  }
+
+  provisioner "local-exec" {
+    when        = destroy
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+
+      for attempt in $(seq 1 60); do
+        ELBV2_ARNS=$(aws elbv2 describe-load-balancers --region ${self.input.aws_region} --profile ${self.input.aws_profile} --query "LoadBalancers[?VpcId=='${self.input.vpc_id}'].LoadBalancerArn" --output text)
+        CLASSIC_NAMES=$(aws elb describe-load-balancers --region ${self.input.aws_region} --profile ${self.input.aws_profile} --query "LoadBalancerDescriptions[?VPCId=='${self.input.vpc_id}'].LoadBalancerName" --output text)
+        if [ -z "$ELBV2_ARNS" ] && [ -z "$CLASSIC_NAMES" ]; then
+          break
+        fi
+        echo "waiting for Kubernetes load balancers to clear"
+        sleep 10
+      done
+
+      for arn in $ELBV2_ARNS; do
+        aws elbv2 delete-load-balancer --region ${self.input.aws_region} --profile ${self.input.aws_profile} --load-balancer-arn "$arn" || true
+      done
+      for name in $CLASSIC_NAMES; do
+        aws elb delete-load-balancer --region ${self.input.aws_region} --profile ${self.input.aws_profile} --load-balancer-name "$name" || true
+      done
+
+      KARPENTER_INSTANCES=$(aws ec2 describe-instances --region ${self.input.aws_region} --profile ${self.input.aws_profile} --filters Name=vpc-id,Values=${self.input.vpc_id} Name=tag-key,Values=karpenter.sh/nodepool Name=instance-state-name,Values=pending,running,stopping,stopped --query 'Reservations[].Instances[].InstanceId' --output text)
+      if [ -n "$KARPENTER_INSTANCES" ]; then
+        aws ec2 terminate-instances --region ${self.input.aws_region} --profile ${self.input.aws_profile} --instance-ids $KARPENTER_INSTANCES >/dev/null
+        aws ec2 wait instance-terminated --region ${self.input.aws_region} --profile ${self.input.aws_profile} --instance-ids $KARPENTER_INSTANCES
+      fi
+
+      for attempt in $(seq 1 60); do
+        ELB_ENI_COUNT=$(aws ec2 describe-network-interfaces --region ${self.input.aws_region} --profile ${self.input.aws_profile} --filters Name=vpc-id,Values=${self.input.vpc_id} --query "length(NetworkInterfaces[?starts_with(Description, 'ELB ')])" --output text)
+        if [ "$ELB_ENI_COUNT" = "0" ]; then
+          break
+        fi
+        echo "waiting for Kubernetes load balancer network interfaces to clear: $ELB_ENI_COUNT"
+        sleep 10
+      done
+
+      for attempt in $(seq 1 12); do
+        SG_IDS=$(aws ec2 describe-security-groups --region ${self.input.aws_region} --profile ${self.input.aws_profile} --filters Name=vpc-id,Values=${self.input.vpc_id} --query "SecurityGroups[?GroupName!='default' && starts_with(GroupName, 'k8s-')].GroupId" --output text)
+        if [ -z "$SG_IDS" ]; then
+          break
+        fi
+        for group_id in $SG_IDS; do
+          aws ec2 delete-security-group --region ${self.input.aws_region} --profile ${self.input.aws_profile} --group-id "$group_id" || true
+        done
+        sleep 10
+      done
+    EOT
+  }
+
+  depends_on = [
+    aws_ssm_association.argocd_bootstrap,
+    module.bastion,
+    module.eks,
+    module.vpc,
+  ]
+}
+
+resource "terraform_data" "vpc_final_destroy_cleanup" {
+  count = local.enable_bastion_bootstrap ? 1 : 0
+
+  input = {
+    aws_region  = var.aws_region
+    aws_profile = var.aws_profile
+    vpc_id      = module.vpc.vpc_id
+  }
+
+  provisioner "local-exec" {
+    when        = destroy
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+
+      for attempt in $(seq 1 12); do
+        SG_IDS=$(aws ec2 describe-security-groups --region ${self.input.aws_region} --profile ${self.input.aws_profile} --filters Name=vpc-id,Values=${self.input.vpc_id} --query "SecurityGroups[?GroupName!='default' && starts_with(GroupName, 'k8s-')].GroupId" --output text)
+        if [ -z "$SG_IDS" ]; then
+          break
+        fi
+        for group_id in $SG_IDS; do
+          aws ec2 delete-security-group --region ${self.input.aws_region} --profile ${self.input.aws_profile} --group-id "$group_id" || true
+        done
+        sleep 10
+      done
+    EOT
+  }
+
+  depends_on = [module.vpc]
 }
