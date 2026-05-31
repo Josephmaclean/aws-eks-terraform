@@ -20,6 +20,6 @@ terraform output karpenter_interruption_queue_name
 terraform output karpenter_node_role_name
 ```
 
-Example Karpenter `NodePool` and `EC2NodeClass` manifests live in `eks/karpenter/`.
+Example Karpenter `NodePool` and `EC2NodeClass` manifests live in `modules/eks_components/karpenter/`.
 
 The examples use `private-eks` as the cluster/discovery name. If you change `cluster_name`, update the `karpenter.sh/discovery` tag values and node role in those manifests.

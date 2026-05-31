@@ -53,18 +53,15 @@ Terraform deletes the EKS cluster and VPC.
 ```text
 .
 ├── global_variables.tf      # Shared provider/name/tag inputs
-├── vpc.tf                   # VPC module wiring
+├── main.tf                  # Root orchestration and bootstrap wiring
 ├── vpc_variables.tf         # VPC inputs
-├── vpc_outputs.tf           # VPC outputs, including the grouped "vpc" object
-├── eks.tf                   # EKS, bastion, and optional Argo CD module wiring
-├── eks_bootstrap.tf         # Bastion-driven EKS bootstrap for Karpenter and Argo CD
 ├── eks_variables.tf         # EKS, Karpenter, bastion, and Argo CD inputs
-├── eks_outputs.tf           # EKS outputs, including the grouped "eks" object
-├── eks/                     # EKS cluster, node groups, Karpenter, and AWS LBC IAM/manifests
-├── bastion/                 # Private SSM bastion with kubectl and helm
-├── argocd/                  # Optional Argo CD Helm bootstrap
+├── outputs.tf               # Root outputs, including grouped "vpc" and "eks" objects
 └── modules/
-    └── vpc/
+    ├── bastion/             # Private SSM bastion with kubectl and helm
+    ├── eks_components/      # EKS cluster, node groups, Karpenter, AWS LBC IAM, manifests, and scripts
+    │   └── argocd/          # Optional Argo CD Helm bootstrap
+    └── vpc_components/
         ├── vpc.tf           # VPC and internet gateway
         ├── subnets.tf       # Public, firewall, and private subnets
         ├── network_firewall.tf

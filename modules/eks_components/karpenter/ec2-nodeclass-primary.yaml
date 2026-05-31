@@ -1,18 +1,18 @@
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
-  name: ml
+  name: primary
 spec:
-  role: private-eks-karpenter-node-role
+  role: __KARPENTER_NODE_ROLE_NAME__
   amiFamily: AL2023
   amiSelectorTerms:
     - alias: al2023@latest
   subnetSelectorTerms:
     - tags:
-        karpenter.sh/discovery: private-eks
+        karpenter.sh/discovery: __CLUSTER_NAME__
   securityGroupSelectorTerms:
     - tags:
-        karpenter.sh/discovery: private-eks
+        karpenter.sh/discovery: __CLUSTER_NAME__
   tags:
-    karpenter.sh/discovery: private-eks
-    workload: ml
+    karpenter.sh/discovery: __CLUSTER_NAME__
+    workload: primary

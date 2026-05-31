@@ -48,3 +48,8 @@ output "aws_load_balancer_controller_role_arn" {
   description = "IAM role ARN used by AWS Load Balancer Controller."
   value       = aws_iam_role.load_balancer_controller.arn
 }
+
+output "bootstrap_document_name" {
+  description = "SSM document name used by the bastion-based EKS component bootstrap."
+  value       = try(aws_ssm_document.argocd_bootstrap[0].name, null)
+}

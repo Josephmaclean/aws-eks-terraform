@@ -7,6 +7,11 @@ dnf install -y unzip tar gzip jq git
 curl -fsSL "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl
 chmod +x /usr/local/bin/kubectl
 
+cat >/etc/profile.d/kubectl-alias.sh <<'SCRIPT'
+alias k=kubectl
+SCRIPT
+chmod 0644 /etc/profile.d/kubectl-alias.sh
+
 curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o /tmp/get-helm-3
 chmod +x /tmp/get-helm-3
 /tmp/get-helm-3
