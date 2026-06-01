@@ -54,25 +54,24 @@ install_karpenter() {
 }
 
 install_load_balancer_controller() {
+  kubectl apply --server-side=true -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.14.0/config/crd/gateway/gateway-crds.yaml
+
   helm repo add eks https://aws.github.io/eks-charts || true
   helm repo update eks
 
-  if helm -n "$AWS_LOAD_BALANCER_CONTROLLER_NAMESPACE" status aws-load-balancer-controller >/dev/null 2>&1; then
-    echo "AWS Load Balancer Controller Helm release already exists; skipping Helm install/upgrade during bootstrap rerun"
-  else
-    helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
-      --version "$AWS_LOAD_BALANCER_CONTROLLER_CHART_VERSION" \
-      --namespace "$AWS_LOAD_BALANCER_CONTROLLER_NAMESPACE" \
-      --create-namespace \
-      --wait \
-      --timeout 10m \
-      --set "clusterName=$CLUSTER_NAME" \
-      --set "region=$AWS_REGION" \
-      --set "vpcId=$VPC_ID" \
-      --set serviceAccount.create=true \
-      --set "serviceAccount.name=$AWS_LOAD_BALANCER_CONTROLLER_SERVICE_ACCOUNT_NAME" \
-      --set replicaCount=1
-  fi
+  helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+    --version "$AWS_LOAD_BALANCER_CONTROLLER_CHART_VERSION" \
+    --namespace "$AWS_LOAD_BALANCER_CONTROLLER_NAMESPACE" \
+    --create-namespace \
+    --wait \
+    --timeout 10m \
+    --set "clusterName=$CLUSTER_NAME" \
+    --set "region=$AWS_REGION" \
+    --set "vpcId=$VPC_ID" \
+    --set serviceAccount.create=true \
+    --set "serviceAccount.name=$AWS_LOAD_BALANCER_CONTROLLER_SERVICE_ACCOUNT_NAME" \
+    --set replicaCount=1
 
   kubectl -n "$AWS_LOAD_BALANCER_CONTROLLER_NAMESPACE" rollout status deployment/aws-load-balancer-controller --timeout=300s
 }
@@ -87,17 +86,14 @@ install_argocd() {
   helm repo add argo https://argoproj.github.io/argo-helm || true
   helm repo update argo
 
-  if helm -n "$ARGOCD_NAMESPACE" status argocd >/dev/null 2>&1; then
-    echo "Argo CD Helm release already exists; skipping Helm install/upgrade during bootstrap rerun"
-  else
-    helm upgrade --install argocd argo/argo-cd \
-      --version "$ARGOCD_CHART_VERSION" \
-      --namespace "$ARGOCD_NAMESPACE" \
-      --create-namespace \
-      --wait \
-      --timeout 10m \
-      --set "server.service.type=$ARGOCD_SERVER_SERVICE_TYPE"
-  fi
+  helm upgrade --install argocd argo/argo-cd \
+    --version "$ARGOCD_CHART_VERSION" \
+    --namespace "$ARGOCD_NAMESPACE" \
+    --create-namespace \
+    --wait \
+    --timeout 10m \
+    --set "server.service.type=$ARGOCD_SERVER_SERVICE_TYPE" \
+    --set "configs.params.server\\.insecure=true"
 
   kubectl -n "$ARGOCD_NAMESPACE" rollout status deployment/argocd-server --timeout=300s
 

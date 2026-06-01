@@ -131,6 +131,72 @@ argocd_root_app_target_revision = "HEAD"
 
 Bump `argocd_bootstrap_revision` to rerun the SSM bootstrap after changing the secret or root app settings.
 
+## Local Kubectl Access
+
+The EKS API endpoint is private-only. After `terraform apply`, use SSM to tunnel
+from your Mac to the private EKS API through the bastion, then point local
+`kubectl` at that tunnel.
+
+Install the AWS Session Manager Plugin on macOS:
+
+```sh
+brew install --cask session-manager-plugin
+```
+
+Start the EKS API tunnel in a dedicated terminal and leave it running:
+
+```sh
+BASTION_INSTANCE_ID=$(terraform output -raw bastion_instance_id)
+EKS_ENDPOINT_URL=$(terraform output -raw eks_cluster_endpoint)
+EKS_ENDPOINT=${EKS_ENDPOINT_URL#https://}
+
+aws ssm start-session \
+  --region eu-west-2 \
+  --profile terraform \
+  --target "$BASTION_INSTANCE_ID" \
+  --document-name AWS-StartPortForwardingSessionToRemoteHost \
+  --parameters "{\"host\":[\"$EKS_ENDPOINT\"],\"portNumber\":[\"443\"],\"localPortNumber\":[\"9443\"]}"
+```
+
+In another terminal, configure local `kubectl` to use the tunnel:
+
+```sh
+CLUSTER_NAME=$(terraform output -raw eks_cluster_name)
+
+aws eks update-kubeconfig \
+  --region eu-west-2 \
+  --profile terraform \
+  --name "$CLUSTER_NAME"
+
+CLUSTER_ARN=$(aws eks describe-cluster \
+  --region eu-west-2 \
+  --profile terraform \
+  --name "$CLUSTER_NAME" \
+  --query cluster.arn \
+  --output text)
+
+kubectl config set-cluster "$CLUSTER_ARN" \
+  --server=https://127.0.0.1:9443 \
+  --tls-server-name="$EKS_ENDPOINT"
+
+kubectl config use-context "$CLUSTER_ARN"
+kubectl get nodes
+```
+
+After that, run Kubernetes commands from your Mac as usual while the SSM tunnel
+terminal is still running.
+
+For Argo CD UI access:
+
+```sh
+kubectl -n argocd port-forward svc/argocd-server 8080:443
+```
+
+Open `https://localhost:8080`. The browser will warn about the local TLS
+certificate. Accept the warning for this private tunnel.
+
+Stop the SSM tunnel with `Ctrl-C` when finished.
+
 ## Bastion Kubectl
 
 After `terraform apply`, start a private SSM session:
