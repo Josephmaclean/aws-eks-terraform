@@ -28,6 +28,7 @@ module "eks" {
   cluster_version                                       = var.cluster_version
   vpc_id                                                = module.vpc.vpc_id
   aws_region                                            = var.aws_region
+  aws_profile                                           = var.aws_profile
   subnet_ids                                            = module.vpc.private_subnet_ids
   cluster_endpoint_public_access                        = var.cluster_endpoint_public_access
   cluster_endpoint_public_access_cidrs                  = var.cluster_endpoint_public_access_cidrs
@@ -163,11 +164,12 @@ resource "terraform_data" "cluster_destroy_cleanup" {
   count = local.enable_bastion_bootstrap ? 1 : 0
 
   input = {
-    aws_region     = var.aws_region
-    aws_profile    = var.aws_profile
-    cluster_name   = module.eks.cluster_name
-    cleanup_script = "${path.module}/modules/eks_components/scripts/cluster-destroy-cleanup.sh"
-    vpc_id         = module.vpc.vpc_id
+    aws_region          = var.aws_region
+    aws_profile         = var.aws_profile
+    bastion_instance_id = module.bastion[0].instance_id
+    cluster_name        = module.eks.cluster_name
+    cleanup_script      = "${path.module}/modules/eks_components/scripts/cluster-destroy-cleanup.sh"
+    vpc_id              = module.vpc.vpc_id
   }
 
   provisioner "local-exec" {
@@ -175,11 +177,12 @@ resource "terraform_data" "cluster_destroy_cleanup" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<-EOT
       set -euo pipefail
-      AWS_REGION='${self.input.aws_region}' AWS_PROFILE='${self.input.aws_profile}' VPC_ID='${self.input.vpc_id}' /bin/bash '${self.input.cleanup_script}'
+      AWS_REGION='${self.input.aws_region}' AWS_PROFILE='${self.input.aws_profile}' CLUSTER_NAME='${self.input.cluster_name}' BASTION_INSTANCE_ID='${self.input.bastion_instance_id}' VPC_ID='${self.input.vpc_id}' /bin/bash '${self.input.cleanup_script}'
     EOT
   }
 
   depends_on = [
+    terraform_data.vpc_final_destroy_cleanup,
     aws_ssm_association.argocd_bootstrap,
     module.bastion,
     module.eks,
@@ -193,6 +196,7 @@ resource "terraform_data" "vpc_final_destroy_cleanup" {
   input = {
     aws_region     = var.aws_region
     aws_profile    = var.aws_profile
+    cluster_name   = var.cluster_name
     cleanup_script = "${path.module}/modules/eks_components/scripts/delete-k8s-security-groups.sh"
     vpc_id         = module.vpc.vpc_id
   }
@@ -202,7 +206,7 @@ resource "terraform_data" "vpc_final_destroy_cleanup" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<-EOT
       set -euo pipefail
-      AWS_REGION='${self.input.aws_region}' AWS_PROFILE='${self.input.aws_profile}' VPC_ID='${self.input.vpc_id}' /bin/bash '${self.input.cleanup_script}'
+      AWS_REGION='${self.input.aws_region}' AWS_PROFILE='${self.input.aws_profile}' CLUSTER_NAME='${self.input.cluster_name}' VPC_ID='${self.input.vpc_id}' /bin/bash '${self.input.cleanup_script}'
     EOT
   }
 

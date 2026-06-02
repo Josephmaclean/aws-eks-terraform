@@ -18,6 +18,11 @@ variable "aws_region" {
   type        = string
 }
 
+variable "aws_profile" {
+  description = "AWS shared config profile used by local destroy cleanup commands."
+  type        = string
+}
+
 variable "subnet_ids" {
   description = "Private subnet IDs used by the EKS control plane and node groups."
   type        = list(string)
