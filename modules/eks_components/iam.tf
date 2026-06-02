@@ -77,6 +77,25 @@ resource "aws_iam_role" "karpenter_controller" {
   assume_role_policy = data.aws_iam_policy_document.karpenter_controller_assume_role.json
 }
 
+data "aws_iam_policy_document" "ebs_csi_driver_assume_role" {
+  statement {
+    actions = [
+      "sts:AssumeRole",
+      "sts:TagSession",
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["pods.eks.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ebs_csi_driver" {
+  name               = "${var.cluster_name}-ebs-csi-driver-role"
+  assume_role_policy = data.aws_iam_policy_document.ebs_csi_driver_assume_role.json
+}
+
 data "aws_iam_policy_document" "karpenter_controller" {
   statement {
     sid = "AllowScopedEC2InstanceActions"
@@ -169,6 +188,11 @@ data "aws_iam_policy_document" "karpenter_controller" {
 resource "aws_iam_policy" "karpenter_controller" {
   name   = "${var.cluster_name}-karpenter-controller"
   policy = data.aws_iam_policy_document.karpenter_controller.json
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
+  role       = aws_iam_role.ebs_csi_driver.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicyV2"
 }
 
 resource "aws_iam_role_policy_attachment" "karpenter_controller" {

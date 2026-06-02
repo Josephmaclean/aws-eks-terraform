@@ -115,3 +115,25 @@ resource "aws_security_group_rule" "nodes_ingress_self" {
   to_port                  = 0
   protocol                 = "-1"
 }
+
+# Managed node groups use the EKS cluster security group, while Karpenter nodes
+# use the nodes security group above. Allow unrestricted east-west traffic
+# between them so pod-to-pod traffic, including CoreDNS lookups, can cross the
+# node-group boundary.
+resource "aws_security_group_rule" "nodes_ingress_from_cluster_sg" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.nodes.id
+  source_security_group_id = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = "-1"
+}
+
+resource "aws_security_group_rule" "cluster_sg_ingress_from_nodes" {
+  type                     = "ingress"
+  security_group_id        = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+  source_security_group_id = aws_security_group.nodes.id
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = "-1"
+}

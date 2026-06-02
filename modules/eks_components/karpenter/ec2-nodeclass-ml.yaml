@@ -6,7 +6,15 @@ spec:
   role: __KARPENTER_NODE_ROLE_NAME__
   amiFamily: AL2023
   amiSelectorTerms:
-    - alias: al2023@latest
+    - name: amazon-eks-node-al2023-x86_64-nvidia-*
+      owner: amazon
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 210Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: __CLUSTER_NAME__
