@@ -66,8 +66,6 @@ module "eks" {
   argocd_root_app_manifest_path                         = var.argocd_root_app_manifest_path
   argocd_root_app_target_revision                       = var.argocd_root_app_target_revision
   argocd_root_app_destination_namespace                 = var.argocd_root_app_destination_namespace
-
-  depends_on = [terraform_data.vpc_final_destroy_cleanup]
 }
 
 module "bastion" {
@@ -208,5 +206,8 @@ resource "terraform_data" "vpc_final_destroy_cleanup" {
     EOT
   }
 
-  depends_on = [module.vpc]
+  depends_on = [
+    module.eks,
+    module.vpc,
+  ]
 }

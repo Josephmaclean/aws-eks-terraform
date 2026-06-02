@@ -1,7 +1,8 @@
 resource "aws_security_group" "nodes" {
-  name        = "${var.cluster_name}-nodes"
-  description = "Security group selected by EKS and Karpenter nodes"
-  vpc_id      = var.vpc_id
+  name                   = "${var.cluster_name}-nodes"
+  description            = "Security group selected by EKS and Karpenter nodes"
+  revoke_rules_on_delete = true
+  vpc_id                 = var.vpc_id
 
   tags = merge(local.karpenter_discovery_tags, {
     Name = "${var.cluster_name}-nodes"
