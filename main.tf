@@ -4,8 +4,7 @@ locals {
   argocd_repo_secret_id = var.argocd_repo_secret_id != "" ? var.argocd_repo_secret_id : "${var.name}/github/repo"
   enable_bastion_bootstrap = var.enable_bastion && (
     var.enable_bastion_argocd_bootstrap ||
-    var.enable_bastion_karpenter_bootstrap ||
-    var.enable_bastion_aws_load_balancer_controller_bootstrap
+    var.enable_bastion_karpenter_bootstrap
   )
 }
 
@@ -24,49 +23,47 @@ module "vpc" {
 module "eks" {
   source = "./modules/eks_components"
 
-  cluster_name                                          = var.cluster_name
-  cluster_version                                       = var.cluster_version
-  vpc_id                                                = module.vpc.vpc_id
-  aws_region                                            = var.aws_region
-  aws_profile                                           = var.aws_profile
-  subnet_ids                                            = module.vpc.private_subnet_ids
-  cluster_endpoint_public_access                        = var.cluster_endpoint_public_access
-  cluster_endpoint_public_access_cidrs                  = var.cluster_endpoint_public_access_cidrs
-  cluster_endpoint_private_access                       = var.cluster_endpoint_private_access
-  primary_node_group_instance_types                     = var.primary_node_group_instance_types
-  primary_node_group_min_size                           = var.primary_node_group_min_size
-  primary_node_group_desired_size                       = var.primary_node_group_desired_size
-  primary_node_group_max_size                           = var.primary_node_group_max_size
-  ml_node_group_instance_types                          = var.ml_node_group_instance_types
-  ml_node_group_min_size                                = var.ml_node_group_min_size
-  ml_node_group_desired_size                            = var.ml_node_group_desired_size
-  ml_node_group_max_size                                = var.ml_node_group_max_size
-  ml_node_group_ami_type                                = var.ml_node_group_ami_type
-  karpenter_namespace                                   = var.karpenter_namespace
-  karpenter_service_account_name                        = var.karpenter_service_account_name
-  karpenter_interruption_queue_retention                = var.karpenter_interruption_queue_retention
-  enable_bastion_bootstrap                              = local.enable_bastion_bootstrap
-  enable_bastion_karpenter_bootstrap                    = var.enable_bastion_karpenter_bootstrap
-  karpenter_chart_version                               = var.karpenter_chart_version
-  enable_default_karpenter_nodepools                    = var.enable_default_karpenter_nodepools
-  enable_bastion_aws_load_balancer_controller_bootstrap = var.enable_bastion_aws_load_balancer_controller_bootstrap
-  aws_load_balancer_controller_namespace                = var.aws_load_balancer_controller_namespace
-  aws_load_balancer_controller_chart_version            = var.aws_load_balancer_controller_chart_version
-  aws_load_balancer_controller_service_account_name     = var.aws_load_balancer_controller_service_account_name
-  enable_bastion_argocd_bootstrap                       = var.enable_bastion_argocd_bootstrap
-  argocd_namespace                                      = var.argocd_namespace
-  argocd_chart_version                                  = var.argocd_chart_version
-  argocd_server_service_type                            = var.argocd_server_service_type
-  argocd_repo_secret_id                                 = local.argocd_repo_secret_id
-  argocd_repo_url                                       = var.argocd_repo_url
-  argocd_repo_url_key                                   = var.argocd_repo_url_key
-  argocd_repo_username_key                              = var.argocd_repo_username_key
-  argocd_repo_password_key                              = var.argocd_repo_password_key
-  argocd_root_app_name                                  = var.argocd_root_app_name
-  argocd_root_app_path                                  = var.argocd_root_app_path
-  argocd_root_app_manifest_path                         = var.argocd_root_app_manifest_path
-  argocd_root_app_target_revision                       = var.argocd_root_app_target_revision
-  argocd_root_app_destination_namespace                 = var.argocd_root_app_destination_namespace
+  cluster_name                                      = var.cluster_name
+  cluster_version                                   = var.cluster_version
+  vpc_id                                            = module.vpc.vpc_id
+  aws_region                                        = var.aws_region
+  aws_profile                                       = var.aws_profile
+  subnet_ids                                        = module.vpc.private_subnet_ids
+  cluster_endpoint_public_access                    = var.cluster_endpoint_public_access
+  cluster_endpoint_public_access_cidrs              = var.cluster_endpoint_public_access_cidrs
+  cluster_endpoint_private_access                   = var.cluster_endpoint_private_access
+  primary_node_group_instance_types                 = var.primary_node_group_instance_types
+  primary_node_group_min_size                       = var.primary_node_group_min_size
+  primary_node_group_desired_size                   = var.primary_node_group_desired_size
+  primary_node_group_max_size                       = var.primary_node_group_max_size
+  ml_node_group_instance_types                      = var.ml_node_group_instance_types
+  ml_node_group_min_size                            = var.ml_node_group_min_size
+  ml_node_group_desired_size                        = var.ml_node_group_desired_size
+  ml_node_group_max_size                            = var.ml_node_group_max_size
+  ml_node_group_ami_type                            = var.ml_node_group_ami_type
+  karpenter_namespace                               = var.karpenter_namespace
+  karpenter_service_account_name                    = var.karpenter_service_account_name
+  karpenter_interruption_queue_retention            = var.karpenter_interruption_queue_retention
+  enable_bastion_bootstrap                          = local.enable_bastion_bootstrap
+  enable_bastion_karpenter_bootstrap                = var.enable_bastion_karpenter_bootstrap
+  karpenter_chart_version                           = var.karpenter_chart_version
+  enable_default_karpenter_nodepools                = var.enable_default_karpenter_nodepools
+  aws_load_balancer_controller_namespace            = var.aws_load_balancer_controller_namespace
+  aws_load_balancer_controller_service_account_name = var.aws_load_balancer_controller_service_account_name
+  enable_bastion_argocd_bootstrap                   = var.enable_bastion_argocd_bootstrap
+  argocd_namespace                                  = var.argocd_namespace
+  argocd_chart_version                              = var.argocd_chart_version
+  argocd_server_service_type                        = var.argocd_server_service_type
+  argocd_repo_secret_id                             = local.argocd_repo_secret_id
+  argocd_repo_url                                   = var.argocd_repo_url
+  argocd_repo_url_key                               = var.argocd_repo_url_key
+  argocd_repo_username_key                          = var.argocd_repo_username_key
+  argocd_repo_password_key                          = var.argocd_repo_password_key
+  argocd_root_app_name                              = var.argocd_root_app_name
+  argocd_root_app_path                              = var.argocd_root_app_path
+  argocd_root_app_manifest_path                     = var.argocd_root_app_manifest_path
+  argocd_root_app_target_revision                   = var.argocd_root_app_target_revision
+  argocd_root_app_destination_namespace             = var.argocd_root_app_destination_namespace
 }
 
 module "bastion" {

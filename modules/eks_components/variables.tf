@@ -123,18 +123,8 @@ variable "enable_default_karpenter_nodepools" {
   type        = bool
 }
 
-variable "enable_bastion_aws_load_balancer_controller_bootstrap" {
-  description = "Whether the bastion bootstrap should install AWS Load Balancer Controller."
-  type        = bool
-}
-
 variable "aws_load_balancer_controller_namespace" {
   description = "Kubernetes namespace where AWS Load Balancer Controller will run."
-  type        = string
-}
-
-variable "aws_load_balancer_controller_chart_version" {
-  description = "AWS Load Balancer Controller Helm chart version."
   type        = string
 }
 

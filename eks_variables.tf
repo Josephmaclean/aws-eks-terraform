@@ -118,18 +118,6 @@ variable "enable_default_karpenter_nodepools" {
   default     = true
 }
 
-variable "enable_bastion_aws_load_balancer_controller_bootstrap" {
-  description = "Whether to install AWS Load Balancer Controller from the bastion bootstrap."
-  type        = bool
-  default     = true
-}
-
-variable "aws_load_balancer_controller_chart_version" {
-  description = "AWS Load Balancer Controller Helm chart version."
-  type        = string
-  default     = "1.14.0"
-}
-
 variable "aws_load_balancer_controller_namespace" {
   description = "Kubernetes namespace where AWS Load Balancer Controller will run."
   type        = string
@@ -277,5 +265,5 @@ variable "mlflow_namespace" {
 variable "mlflow_service_account_name" {
   description = "Service account name used by the MLflow Helm chart."
   type        = string
-  default     = "mlflow"
+  default     = "mlflow-sa"
 }

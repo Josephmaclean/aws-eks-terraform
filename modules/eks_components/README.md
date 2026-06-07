@@ -9,6 +9,7 @@ This module creates:
 - IAM roles for managed nodes, Karpenter controller, and Karpenter-launched nodes
 - Karpenter interruption SQS queue and EventBridge forwarding
 - Pod Identity association for the Karpenter controller service account
+- Pod Identity association and IAM policy for the AWS Load Balancer Controller
 
 ## Karpenter
 
@@ -23,3 +24,5 @@ terraform output karpenter_node_role_name
 Example Karpenter `NodePool` and `EC2NodeClass` manifests live in `modules/eks_components/karpenter/`.
 
 The examples use `private-eks` as the cluster/discovery name. If you change `cluster_name`, update the `karpenter.sh/discovery` tag values and node role in those manifests.
+
+The AWS Load Balancer Controller is managed separately by Argo CD. Terraform only creates its IAM and Pod Identity plumbing.

@@ -15,8 +15,8 @@ Terraform for a private EKS environment on AWS. This first step creates the base
 - Karpenter AWS-side IAM, interruption queue, and example NodePool manifests
 - S3 bucket for MLflow artifacts using the shared `name` prefix convention
 - MLflow IRSA role for a Helm chart service account that writes to the artifacts bucket
-- AWS Load Balancer Controller IAM and bastion Helm bootstrap
-- Terraform-managed SSM bootstrap for Karpenter, AWS Load Balancer Controller, Argo CD, and the Argo CD root Application
+- AWS Load Balancer Controller IAM managed in Terraform, with the Helm release owned by Argo CD
+- Terraform-managed SSM bootstrap for Karpenter and Argo CD, plus the Argo CD root Application
 - Private SSM bastion/admin host with kubectl and helm
 - Terraform destroy-time cleanup for Kubernetes-created AWS dependencies
 

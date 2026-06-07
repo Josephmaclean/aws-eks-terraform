@@ -53,29 +53,6 @@ install_karpenter() {
   fi
 }
 
-install_load_balancer_controller() {
-  kubectl apply --server-side=true -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.14.0/config/crd/gateway/gateway-crds.yaml
-
-  helm repo add eks https://aws.github.io/eks-charts || true
-  helm repo update eks
-
-  helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
-    --version "$AWS_LOAD_BALANCER_CONTROLLER_CHART_VERSION" \
-    --namespace "$AWS_LOAD_BALANCER_CONTROLLER_NAMESPACE" \
-    --create-namespace \
-    --wait \
-    --timeout 10m \
-    --set "clusterName=$CLUSTER_NAME" \
-    --set "region=$AWS_REGION" \
-    --set "vpcId=$VPC_ID" \
-    --set serviceAccount.create=true \
-    --set "serviceAccount.name=$AWS_LOAD_BALANCER_CONTROLLER_SERVICE_ACCOUNT_NAME" \
-    --set replicaCount=1
-
-  kubectl -n "$AWS_LOAD_BALANCER_CONTROLLER_NAMESPACE" rollout status deployment/aws-load-balancer-controller --timeout=300s
-}
-
 patch_argocd_finalizers() {
   for app in $(kubectl -n "$ARGOCD_NAMESPACE" get applications.argoproj.io -o name); do
     kubectl -n "$ARGOCD_NAMESPACE" patch "$app" --type merge -p '{"metadata":{"finalizers":["resources-finalizer.argocd.argoproj.io"]}}' || true
@@ -172,10 +149,6 @@ ROOT_APP
 
 if [ "$ENABLE_BASTION_KARPENTER_BOOTSTRAP" = "true" ]; then
   install_karpenter
-fi
-
-if [ "$ENABLE_BASTION_AWS_LOAD_BALANCER_CONTROLLER_BOOTSTRAP" = "true" ]; then
-  install_load_balancer_controller
 fi
 
 if [ "$ENABLE_BASTION_ARGOCD_BOOTSTRAP" = "true" ]; then
