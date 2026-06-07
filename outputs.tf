@@ -73,6 +73,26 @@ output "network_firewall_arn" {
   value       = module.vpc.network_firewall_arn
 }
 
+output "mlflow_artifacts_bucket_name" {
+  description = "Name of the S3 bucket used for MLflow artifacts."
+  value       = aws_s3_bucket.mlflow_artifacts.bucket
+}
+
+output "mlflow_artifacts_bucket_arn" {
+  description = "ARN of the S3 bucket used for MLflow artifacts."
+  value       = aws_s3_bucket.mlflow_artifacts.arn
+}
+
+output "mlflow_irsa_role_arn" {
+  description = "IAM role ARN used by the MLflow service account."
+  value       = aws_iam_role.mlflow.arn
+}
+
+output "mlflow_artifacts_bucket_uri" {
+  description = "S3 URI used as the MLflow artifact root."
+  value       = "s3://${aws_s3_bucket.mlflow_artifacts.bucket}"
+}
+
 output "eks_cluster_name" {
   description = "Name of the EKS cluster."
   value       = module.eks.cluster_name

@@ -49,6 +49,16 @@ output "aws_load_balancer_controller_role_arn" {
   value       = aws_iam_role.load_balancer_controller.arn
 }
 
+output "oidc_provider_arn" {
+  description = "ARN of the EKS OIDC provider."
+  value       = aws_iam_openid_connect_provider.this.arn
+}
+
+output "oidc_provider_url" {
+  description = "Issuer URL of the EKS OIDC provider."
+  value       = aws_iam_openid_connect_provider.this.url
+}
+
 output "bootstrap_document_name" {
   description = "SSM document name used by the bastion-based EKS component bootstrap."
   value       = try(aws_ssm_document.argocd_bootstrap[0].name, null)

@@ -267,3 +267,15 @@ variable "argocd_root_app_destination_namespace" {
   type        = string
   default     = "argocd"
 }
+
+variable "mlflow_namespace" {
+  description = "Namespace where MLflow will be installed."
+  type        = string
+  default     = "mlflow"
+}
+
+variable "mlflow_service_account_name" {
+  description = "Service account name used by the MLflow Helm chart."
+  type        = string
+  default     = "mlflow"
+}

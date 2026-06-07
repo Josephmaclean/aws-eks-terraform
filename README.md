@@ -13,6 +13,8 @@ Terraform for a private EKS environment on AWS. This first step creates the base
 - Kubernetes subnet tags for future EKS load balancers
 - Private EKS cluster with managed node groups for primary and ML workloads
 - Karpenter AWS-side IAM, interruption queue, and example NodePool manifests
+- S3 bucket for MLflow artifacts using the shared `name` prefix convention
+- MLflow IRSA role for a Helm chart service account that writes to the artifacts bucket
 - AWS Load Balancer Controller IAM and bastion Helm bootstrap
 - Terraform-managed SSM bootstrap for Karpenter, AWS Load Balancer Controller, Argo CD, and the Argo CD root Application
 - Private SSM bastion/admin host with kubectl and helm
@@ -131,6 +133,26 @@ argocd_root_app_target_revision = "HEAD"
 
 Bump `argocd_bootstrap_revision` to rerun the SSM bootstrap after changing the secret or root app settings.
 
+## MLflow IRSA
+
+The MLflow bucket is intended to be accessed from a pod running in EKS using IRSA.
+Terraform creates the IAM role and exposes the values you need:
+
+- `mlflow_irsa_role_arn`
+- `mlflow_artifacts_bucket_uri`
+
+When installing the MLflow Helm chart, configure the chart's service account to use that role ARN. Most charts follow the same pattern:
+
+```yaml
+serviceAccount:
+  create: true
+  name: mlflow
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/private-eks-mlflow-role
+```
+
+Then point MLflow's artifact root at the S3 URI output by Terraform.
+
 ## Local Kubectl Access
 
 The EKS API endpoint is private-only. After `terraform apply`, use SSM to tunnel
@@ -192,8 +214,8 @@ For Argo CD UI access:
 kubectl -n argocd port-forward svc/argocd-server 8080:443
 ```
 
-Open `https://localhost:8080`. The browser will warn about the local TLS
-certificate. Accept the warning for this private tunnel.
+Open `http://localhost:8080`. The port-forward terminates at the Argo CD
+server's plain HTTP listener, so no local TLS certificate is involved.
 
 Stop the SSM tunnel with `Ctrl-C` when finished.
 
