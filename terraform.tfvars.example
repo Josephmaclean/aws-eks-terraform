@@ -51,7 +51,6 @@ aws_load_balancer_controller_service_account_name     = "aws-load-balancer-contr
 #   "github_token": "ghp_..."
 # }
 argocd_repo_secret_id           = ""
-argocd_repo_secret_arn          = "*"
 argocd_repo_url                 = ""
 argocd_repo_url_key             = "repo_url"
 argocd_repo_username_key        = "github_username"

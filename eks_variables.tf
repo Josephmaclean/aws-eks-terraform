@@ -220,12 +220,6 @@ variable "argocd_repo_password_key" {
   default     = "github_token"
 }
 
-variable "argocd_repo_secret_arn" {
-  description = "Fallback Secrets Manager secret ARN for bastion IAM when Argo CD bootstrap is disabled. Bootstrap mode resolves the ARN from argocd_repo_secret_id."
-  type        = string
-  default     = "*"
-}
-
 variable "argocd_root_app_name" {
   description = "Name of the Argo CD root Application."
   type        = string

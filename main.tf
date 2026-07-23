@@ -77,7 +77,7 @@ module "bastion" {
   kubectl_version = var.kubectl_version
   cluster_name    = module.eks.cluster_name
   aws_region      = var.aws_region
-  secret_arns     = var.enable_bastion_argocd_bootstrap ? [data.aws_secretsmanager_secret.argocd_repo[0].arn] : [var.argocd_repo_secret_arn]
+  secret_arns     = var.enable_bastion_argocd_bootstrap ? [data.aws_secretsmanager_secret.argocd_repo[0].arn] : []
 
   depends_on = [module.eks]
 }

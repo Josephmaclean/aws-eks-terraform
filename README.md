@@ -120,7 +120,6 @@ Relevant variables:
 
 ```hcl
 argocd_repo_secret_id           = "" # defaults to "${name}/github/repo"
-argocd_repo_secret_arn          = "arn:aws:secretsmanager:eu-west-2:123456789012:secret:private-eks/github/repo-AbCdEf"
 argocd_repo_url                 = ""
 argocd_repo_url_key             = "repo_url"
 argocd_repo_username_key        = "github_username"
